@@ -11,21 +11,10 @@
 #include <xc.h>
 #include "d_lora.h"
 #include "ihm.h"
+#include "global.h"
 
 char choice=0;
 char i;
-
-struct System_state
-{
-    char mode; // Rx=0, Tx=1, None=2
-    char payload[100];
-    int reapet_delay;
-    char channel;
-    char rf_mode;
-    char src_addr;
-    char dest_addr;
-    char display_rx;
-};
 
 extern struct System_state state_struct;
 
@@ -52,7 +41,6 @@ void ihm_display_menu(char menu) {
             uart_send_string("2 -> Mode (Tx or Rx)\n");
             uart_send_string("3 -> Canal\n");
             uart_send_string("4 -> RF Mode\n");
-            
             uart_send_string("5 -> Payload\n");
             uart_send_string("6 -> Src ID\n");
             uart_send_string("7 -> Dest ID\n");
@@ -137,10 +125,44 @@ void ihm_display_menu(char menu) {
             uart_send_string("Channel : ");
             break;
             
+        case 4:
+            uart_send_string("RF MODE :\n");
+            uart_send_string("1. better reach, medium time on air\n");
+            uart_send_string("2. medium reach, less time on air\n");
+            uart_send_string("3. worst reach, less time on air\n");
+            uart_send_string("4. better reach, low time on air\n");
+            uart_send_string("5. better reach, medium time on air\n");
+            uart_send_string("6. better reach, worst time-on-air\n");
+            uart_send_string("7. medium-high reach, medium-low time-on-air\n");
+            uart_send_string("8. medium reach, medium time-on-air\n");
+            uart_send_string("9. medium-low reach, medium-high time-on-air\n");
+            uart_send_string("10. worst reach, less time_on_air\n");
+            
+            uart_send_string("Mode : ");
+            break;
+            
         case 5:
             ihm_display_header();
             uart_send_string(">> PLAYLOAD ENTER\n");
             uart_send_string("Text : ");
+            break;
+            
+        case 6:
+            ihm_display_header();
+            uart_send_string(">> SRC ADDR (0-255) :\n");
+            uart_send_string("Addr : ");
+            break;
+            
+        case 7:
+            ihm_display_header();
+            uart_send_string(">> DEST ADDR (0-255) :\n");
+            uart_send_string("Addr : ");
+            break;
+            
+        case 8:
+            ihm_display_header();
+            uart_send_string(">> REPEAT DELAY\n");
+            uart_send_string("Delay : ");
             break;
     }
 }
@@ -160,8 +182,28 @@ void ihm_recep_car(char car) {
         inib_display = 1;
     }
     
+    if (choice == 4) {
+        ihm_writeRFMode(car);
+        inib_display = 1;
+    }
+    
     if (choice == 5) {
         ihm_writePayload(car);
+        inib_display = 1;
+    }
+    
+    if (choice == 6) {
+        ihm_writeSrcAddr(car);
+        inib_display = 1;
+    }
+    
+    if (choice == 7) {
+        ihm_writeDestAddr(car);
+        inib_display = 1;
+    }
+    
+    if (choice == 8) {
+        ihm_writeRepeatDelay(car);
         inib_display = 1;
     }
     
@@ -179,9 +221,30 @@ void ihm_recep_car(char car) {
         choice = 3;
     }
     
+    if (choice == 0 && car == '4') {
+        i = 0;
+        choice = 4;
+    }
+    
     if (choice == 0 && car == '5') {
         i = 0;
         choice = 5;
+    }
+    
+    if (choice == 0 && car == '6') {
+        i = 0;
+        choice = 6;
+    }
+    
+    if (choice == 0 && car == '7') {
+        i = 0;
+        choice = 7;
+    }
+    
+    
+    if (choice == 0 && car == '8') {
+        i = 0;
+        choice = 8;
     }
     
     if (choice == 0 && car == '9') {
@@ -233,7 +296,7 @@ void ihm_writeMode(char car) {
 
 void ihm_writeFreq(char car) {
     if (car < '0' && car > '9' && car != '\r')
-    return;
+        return;
     
     uart_send_char(car);
     
@@ -256,6 +319,124 @@ void ihm_writeFreq(char car) {
         
         
         lora_setChannel(state_struct.channel);
+        
+        choice = 0;
+        ihm_clear();
+        ihm_display_menu(choice);
+    }
+}
+
+void ihm_writeRepeatDelay(char car) {
+    
+    int j;
+    if (car < '0' && car > '9' && car != '\r')
+        return;
+    
+    if (!i) 
+        state_struct.reapet_delay = 0;
+    
+    uart_send_char(car);
+    
+    if (car != '\r') {
+        
+        for (j=0;j<i;j++)
+            state_struct.reapet_delay *= 10;
+        
+        state_struct.reapet_delay += car - '0';
+        
+        i++;
+    }
+    else {
+        if (state_struct.reapet_delay < 500)
+            state_struct.reapet_delay = 500;
+        
+        choice = 0;
+        ihm_clear();
+        ihm_display_menu(choice);
+    }
+}
+
+void ihm_writeRFMode(char car) {
+    if (car < '0' && car > '9' && car != '\r')
+        return;
+    
+    uart_send_char(car);
+    
+    if (car != '\r') {
+        
+        if (i == 1) {
+            state_struct.rf_mode = state_struct.rf_mode*10 + (car - '0');
+        }
+        if (i == 0) {
+            state_struct.rf_mode = car - '0';
+            i++;
+        }
+    }
+    else {
+        if (state_struct.rf_mode < 1)
+            state_struct.rf_mode = 1;
+        
+        if (state_struct.rf_mode > 10)
+            state_struct.rf_mode = 10;
+        
+        
+        lora_setChannel(state_struct.rf_mode);
+        
+        choice = 0;
+        ihm_clear();
+        ihm_display_menu(choice);
+    }
+}
+
+void ihm_writeSrcAddr(char car) {
+    
+    int j;
+    if (car < '0' && car > '9' && car != '\r')
+        return;
+    
+    if (!i) 
+        state_struct.src_addr = 0;
+    
+    uart_send_char(car);
+    
+    if (car != '\r') {
+        
+        for (j=0;j<i;j++)
+            state_struct.src_addr *= 10;
+        
+        state_struct.src_addr += car - '0';
+        
+        i++;
+    }
+    else {
+        
+        choice = 0;
+        ihm_clear();
+        ihm_display_menu(choice);
+    }
+}
+
+void ihm_writeDestAddr(char car) {
+    
+    int j;
+    if (car < '0' && car > '9' && car != '\r')
+        return;
+    
+    if (!i) 
+        state_struct.dest_addr = 0;
+    
+    uart_send_char(car);
+    
+    if (car != '\r') {
+        
+        for (j=0;j<i;j++)
+            state_struct.dest_addr *= 10;
+        
+        state_struct.dest_addr += car - '0';
+        
+        i++;
+    }
+    else {
         
         choice = 0;
         ihm_clear();

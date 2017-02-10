@@ -82,22 +82,11 @@
 #include "d_spi.h"
 #include "d_lora.h"
 #include "ihm.h"
+#include "global.h"
 
-void load_tab(char* toload, char* tab);
+
 
 // STATE STRUCT
-struct System_state
-{
-    char mode; // Rx=0, Tx=1, None=2
-    char payload[100];
-    int  reapet_delay;
-    char channel;
-    char rf_mode;
-    char src_addr;
-    char dest_addr;
-    char display_rx;
-};
-
 struct System_state state_struct;
 
 void init();

@@ -14,6 +14,11 @@ void ihm_recep_car(char car);
 void ihm_writeMode(char car);
 void ihm_writePayload(char car);
 void ihm_writeFreq(char car);
+void ihm_writeRepeatDelay(char car);
+void ihm_writeRFMode(char car);
+
+void ihm_writeSrcAddr(char car);
+void ihm_writeDestAddr(char car);
 
 #endif	/* IHM_H */
 
