@@ -754,11 +754,20 @@ char lora_availableData() {
     T0CONbits.TMR0ON = 1;
     
     TMR0 = 0;
-    while (!(lora_spi_read(REG_IRQ_FLAGS) & 0x10) && !timeout(3)) ;
-    
+    //
+    while(!(lora_spi_read(REG_IRQ_FLAGS) & 0x10)) {
+
+        if(timeout(3))
+             return 0; // If no packets received during a 3s timeout
+    }
+
     // Waiting to read first payload bytes from packet
     TMR0 = 0;
-    while (!lora_spi_read(REG_FIFO_RX_BYTE_ADDR) && !timeout(3)) ;
+    while (!lora_spi_read(REG_FIFO_RX_BYTE_ADDR)) {
+
+        if(timeout(3))
+            return 0; // If no packets received during a 3s timeout
+    }
     
     T0CONbits.TMR0ON = 0;
     
