@@ -120,9 +120,10 @@ void interrupt low_priority LowIsr(void) // Low priority interrupt
  */
 int main() {
     
-    char received[30];
+    char received[255];
     char length;
     int i;
+    char last_pacnum=0;
     
     init();
     

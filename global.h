@@ -13,7 +13,7 @@ void load_tab(char* toload, char* tab);
 struct System_state
 {
     char mode; // Rx=0, Tx=1, None=2
-    char payload[100];
+    char payload[255];
     int  reapet_delay;
     char channel;
     char rf_mode;

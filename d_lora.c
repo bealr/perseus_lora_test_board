@@ -19,7 +19,7 @@ char timeout_var=0;
 struct System_state
 {
     char mode; // Rx=0, Tx=1, None=2
-    char payload[100];
+    char payload[255];
     int reapet_delay;
     char channel;
     char rf_mode;
@@ -651,13 +651,17 @@ void lora_sendPacket(char dest, char* payload) {
 
     LATA0 = 1; // Tx led: ON
     
+    
+    // Wait until the packet is not sent ( by checking TX_Done_flag)
+    while (!(lora_spi_read(REG_IRQ_FLAGS) & 0x08)) ;
+    
+    
     lora_setPacket(dest, payload); // Load packet in chip buffer
     lora_clrFlags();               // Clear flags to prepare sending
     
     lora_spi_write(REG_OP_MODE, LORA_TX_MODE); // go Tx mode ! (SEND !!)
     
-    // Wait until the packet is not sent ( by checking TX_Done_flag)
-    while (!(lora_spi_read(REG_IRQ_FLAGS) & 0x08)) ; // TODO: timeout
+
     
     LATA0 = 0; // Tx Led: OFF
 }
