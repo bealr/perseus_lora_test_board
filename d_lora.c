@@ -650,18 +650,14 @@ void lora_setPacket(char dest, char *payload) {
 void lora_sendPacket(char dest, char* payload) {
 
     LATA0 = 1; // Tx led: ON
-    
-    
-    // Wait until the packet is not sent ( by checking TX_Done_flag)
-    while (!(lora_spi_read(REG_IRQ_FLAGS) & 0x08)) ;
-    
-    
+
     lora_setPacket(dest, payload); // Load packet in chip buffer
     lora_clrFlags();               // Clear flags to prepare sending
     
     lora_spi_write(REG_OP_MODE, LORA_TX_MODE); // go Tx mode ! (SEND !!)
     
-
+    // Wait until the packet is not sent ( by checking TX_Done_flag)
+    while (!(lora_spi_read(REG_IRQ_FLAGS) & 0x08)) ;
     
     LATA0 = 0; // Tx Led: OFF
 }
