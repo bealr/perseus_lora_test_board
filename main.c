@@ -83,6 +83,7 @@
 #include "d_lora.h"
 #include "ihm.h"
 #include "global.h"
+#include "RC522.h"
 
 
 
@@ -138,13 +139,50 @@ int main() {
     
     spi_init();
     uart_init();
-    lora_init(state_struct.mode);
+    //lora_init(state_struct.mode);
+    init_RC522();
+    
+    int i;
+    char status;
+    char str[100];
+    
+    while(1) {
+        status = MFRC522_Request(PICC_REQIDL, str); // check if card is present
+        if (status == MI_OK)
+        {
+            uart_send_string("CARTE OK !! \n");
+            
+            if (MFRC522_ReadCardSerial(str) == MI_OK) // get UID
+            {
+                uart_send_string("SERIAL OK !! \n");
+                uart_send_string("UID = ");     // and display it
+                uart_send_hex(*(str+0));
+                uart_send_hex(*(str+1));
+                uart_send_hex(*(str+2));
+                uart_send_hex(*(str+3));
+                uart_send_string("\n");
+            }
+            
+            LATA0 = 1;                         // blink LED0
+            for (i=0;i<10;i++) __delay_ms(10); // .
+            LATA0 = 0;                         // .
+            for (i=0;i<10;i++) __delay_ms(10); // .
+            LATA0 = 1;                         // .
+            for (i=0;i<10;i++) __delay_ms(10); // .
+            LATA0 = 0;                         // .
+            for (i=0;i<10;i++) __delay_ms(10); // .
+            LATA0 = 1;                         // .
+            for (i=0;i<10;i++) __delay_ms(10); // .
+            LATA0 = 0;                         // .
+            for (i=0;i<10;i++) __delay_ms(10); // .
+        }
+    }
     
     LATA0 = 0;
     LATA1 = 0;
     
-    GIEH = 1;
-    GIEL = 1;
+    //GIEH = 1;
+    //GIEL = 1;
     
 
     // TIMER TEST
@@ -226,6 +264,11 @@ void init() {
     
     TRISAbits.TRISA0 = 0; // Led Tx LORA
     TRISAbits.TRISA1 = 0; // Led Rx LORA
+    TRISBbits.TRISB1 = 0; // reset RC522
+    TRISBbits.TRISB2 = 0; // CS RC522
+    
+    LATA1 = 0;
+    LATA0 = 0;
     
     ANCON0 = 0;
     ANCON1 = 0;
